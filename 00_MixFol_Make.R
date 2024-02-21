@@ -7,37 +7,40 @@
 library(tidyverse)
 
 # Set Working Directory
-setwd("E:/BBK22/1. BBK22_folates_Oct5 2023/Analysis")
+setwd("E:/BBK22/1. BBK22_folates_Oct5 2023/Analysis/airpollution_folate/")
 
 ##### Set-up ###################################################################
 # Functions
-source("MixFol_Functions.R")
+source("01A_MixFol_Functions.R")
 
 ##### Read Data ################################################################
 df <- readRDS("MixFol_Complete.rds")
 
 df %>% head()
 
-##### Analysis #################################################################
+##### Exploratory Data Analysis ################################################
 # Explore
-source("MixFol_Explore.R")
+source("02A_MixFol_Explore.R")
 
+##### Regression Models ########################################################
 # Linear Models
-source("MixFol_LinearModels.R")
+source("03A_MixFol_LinearModels.R")
 
 # Penalized Regression
-source("MixFol_PenalizedModels.R")
+source("03B_MixFol_PenalizedModels.R")
 
 # Treed Distributed Non-linear Models
 
+##### Tables ###################################################################
 # Table 1
-source("MixFol_Table1.R")
+source("04A_MixFol_Table1.R")
 
 # Table 2
-source("MixFol_Table2.R")
+source("04B_MixFol_Table2.R")
 
 # Table 3
 
+##### Figures ##################################################################
 # Figure S1
 
 # Figure S2
