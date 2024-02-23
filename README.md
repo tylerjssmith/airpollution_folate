@@ -17,7 +17,7 @@ This repository documents the code for an analysis of air pollution and plasma f
 ## Modeling
 
 * [Linear Regression Models](03A_MixFol_LinearModels.R)
-* [Penalized Regression Models](03B_MixFol_PenalizedModels.R)
+* [Penalized Regression Models](03B_MixFol_Shrinkage.R)
 
 ## Tables
 
