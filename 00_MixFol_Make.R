@@ -23,13 +23,12 @@ df %>% head()
 source("02A_MixFol_Explore.R")
 
 ##### Regression Models ########################################################
-# Linear Models
-source("03A_MixFol_LinearModels.R")
+# Make Person-Period Data
+source("03A_MixFol_PersonPeriod.R")
 
-# Penalized Regression
-source("03B_MixFol_PenalizedModels.R")
+# Run Multiple Imputation
 
-# Treed Distributed Non-linear Models
+# Fit Generalized Estimating Equations Models
 
 ##### Tables ###################################################################
 # Table 1

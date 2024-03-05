@@ -6,21 +6,6 @@
 # Load Packages
 library(tidyverse)
 
-##### Function: Density Plots of Air Pollutant Distributions ###################
-plot_air <- function(data, select, title) {
- data %>%
-  select(contains(select)) %>%
-  pivot_longer(everything()) %>%
-  ggplot(aes(x = value)) +
-  geom_density() +
-  facet_wrap(. ~ name, scales = "free") +
-  labs(
-    title = paste("Air Pollution Distributions:", title),
-    x = "Concentration",
-    y = "Density") +
-  theme_bw() 
-}
-
 ##### Function: Make Descriptive Table #########################################
 make_table <- function(data, x, y = FOL_TM1_TOTAL) {
  
