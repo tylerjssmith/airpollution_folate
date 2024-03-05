@@ -8,9 +8,6 @@ library(tidyverse)
 library(geepack)
 library(broom)
 
-##### Read Data ################################################################
-df = readRDS("E:/BBK22/1. BBK22_folates_Oct5 2023/Analysis/MixFol_Complete.rds")
-
 ##### Select Data ##############################################################
 df_period = df %>%
   select(
