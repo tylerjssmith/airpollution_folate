@@ -17,6 +17,7 @@ This repository documents the code for an analysis of air pollution and plasma f
 ## Modeling
 
 * [Make Persion-Period Dataset](03A_MixFol_PersonPeriod.R)
+* [Run Multiple Imputation](03B_MixFol_MICE.R)
 
 ## Tables
 

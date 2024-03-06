@@ -27,6 +27,7 @@ source("02A_MixFol_Explore.R")
 source("03A_MixFol_PersonPeriod.R")
 
 # Run Multiple Imputation
+source("03B_MixFol_MICE.R")
 
 # Fit Generalized Estimating Equations Models
 
