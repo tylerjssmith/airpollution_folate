@@ -4,4 +4,13 @@
 .Ruserdata
 *.Rproj
 *.rds
-archive/
+data/
+drafts/
+figures/
+notes/
+presentations/
+submissions/
+tables/
+
+
+
