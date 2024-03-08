@@ -1,9 +1,11 @@
+# Ignore Non-code R Files
 .Rproj.user
 .Rhistory
 .RData
 .Ruserdata
-*.Rproj
 *.rds
+
+# Ignore Non-code Directories
 data/
 drafts/
 figures/
