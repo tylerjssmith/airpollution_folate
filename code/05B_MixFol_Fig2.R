@@ -1,23 +1,24 @@
 ################################################################################
 # Environmental Mixtures and Plasma Folate in Pregnancy
-# Figure 2: Plasma Total Folate
+# Figure 2: Plasma Folate Distributions
 
 ##### Preliminaries ############################################################
 # Load Packages
 library(tidyverse)
 
-##### Figure 2: Plasma Total Folate ############################################
+##### Prepare Data #############################################################
 df_fig2 <- df %>%
   select(SUBJECT_ID, contains("_TOTAL")) %>%
   pivot_longer(-SUBJECT_ID)
 
 df_fig2 %>% head()
 
+##### Prepare Labels ###########################################################
 labs_fig2 <- c(
-  "Trimester 1: Folate, Linear",
-  "Trimester 1: Folate, Natural Log",
-  "Trimester 3: Folate, Linear",
-  "Trimester 3: Folate, Natural Log"
+  "Trimester 1: Total Folate",
+  "Trimester 1: ln(Total Folate)",
+  "Trimester 3: Total Folate",
+  "Trimester 3: ln(Total Folate)"
 )
 
 names(labs_fig2) <- c(
@@ -27,19 +28,22 @@ names(labs_fig2) <- c(
   "FOL_TM3_TOTAL_LN"
 )
 
-(fig2 <- df_fig2 %>%
+##### Generate Figure ##########################################################
+fig2 <- df_fig2 %>%
   ggplot(aes(x = value)) +
   geom_density() +
   facet_wrap(. ~ name, scales = "free", labeller = labeller(name = labs_fig2)) +
   labs(
-    title = "Plasma Total Folate by Trimester",
-    x = "Plasma Total Folate (nmol/L)",
+    x = "Plasma Folate (nmol/L)",
     y = "Density") +
-  theme_bw())
+  theme_bw()
 
+fig2
+
+##### Export Figure ############################################################
 ggsave(
   plot = fig2,
-  filename = "MixFol_Fig2_Folate.jpg",
+  filename = "figures/MixFol_FigS2_Folate.jpg",
   device = "jpeg",
   width = 6.5,
   height = 8,

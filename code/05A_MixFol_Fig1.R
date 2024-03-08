@@ -1,53 +1,52 @@
 ################################################################################
 # Environmental Mixtures and Plasma Folate in Pregnancy
-# Figure 1: Air Pollution
+# Figure 1: Air Pollution Distributions
 
 ##### Preliminaries ############################################################
 # Load Packages
 library(tidyverse)
 
-##### Figure 1: Air Pollution ##################################################
-df_fig1 <- df %>%
-  select(SUBJECT_ID, contains("_TRIM1")) %>%
-  pivot_longer(-SUBJECT_ID)
+##### Prepare Data #############################################################
+df_fig1 = df %>%
+  select(SUBJECT_ID, contains("NO2"), contains("O3"), contains("PM25"), 
+    contains("SO2")) %>%
+  pivot_longer(-SUBJECT_ID, values_to = "CONCENTRATION")
+
+df_fig1 = df_fig1 %>%
+  separate(name, into = c("POLLUTANT","VISIT"), sep = "_") %>%
+  mutate(
+    VISIT = 
+      ifelse(VISIT == "V1", "Trimester 1", 
+      ifelse(VISIT == "V3", "Trimester 3", NA))
+  )
 
 df_fig1 %>% head()
 
-labs_fig1 <- c(
-  "NO2 (ppb), Linear",
-  "NO2 (ppb), Binary Log",
-  "O3 (ppb), Linear",
-  "O3 (ppb), Binary Log",
-  "PM2.5 (mcg/m3), Linear",
-  "PM2.5 (mcg/m3), Binary Log",
-  "SO2 (ppb), Linear",
-  "SO2 (ppb), Binary Log"
-)
+##### Prepare Labels ###########################################################
+fig1_labels = as_labeller(c(NO2="NO[2] (ppb)", O3="O[3] (ppb)", 
+  PM25="PM[2.5] (µg/m^3)", SO2="SO[2] (ppb)"), default = label_parsed)
 
-names(labs_fig1) <- c(
-  "NO2_TRIM1",
-  "NO2_TRIM1_L2",
-  "O3_TRIM1",
-  "O3_TRIM1_L2",
-  "PM25_TRIM1",
-  "PM25_TRIM1_L2",
-  "SO2_TRIM1",
-  "SO2_TRIM1_L2"
-)
-
-(fig1 <- df_fig1 %>%
-  ggplot(aes(x = value)) +
+##### Generate Figure ##########################################################
+fig1 = df_fig1 %>%
+  ggplot(aes(x = CONCENTRATION)) +
   geom_density() +
-  facet_wrap(. ~ name, ncol = 2, scales = "free", labeller = labeller(name = labs_fig1)) +
+  facet_wrap(POLLUTANT ~ VISIT, ncol = 2, scales = "free", 
+    labeller = labeller(POLLUTANT = fig1_labels)) +
   labs(
-    title = "Average Daily Air Pollutant Concentrations in the First Trimester",
-    x = "Average Daily Air Pollution in the First Trimester",
+    x = "Concentration",
     y = "Density") +
-  theme_bw())
+  theme_bw() +
+  theme(
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor = element_blank()
+  )
 
+fig1
+
+##### Export Figure ############################################################
 ggsave(
   plot = fig1,
-  filename = "MixFol_Fig1_Air.jpg",
+  filename = "figures/MixFol_FigS1_Air.jpg",
   device = "jpeg",
   width = 6.5,
   height = 8,
