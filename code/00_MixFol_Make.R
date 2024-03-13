@@ -20,11 +20,11 @@ df %>% head()
 source("code/02A_MixFol_Explore.R")
 
 ##### Regression Models ########################################################
-# Make Person-Period Data
-source("code/03A_MixFol_PersonPeriod.R")
-
 # Run Multiple Imputation
 source("code/03B_MixFol_MICE.R")
+
+# Make Person-Period Data
+source("code/03A_MixFol_PersonPeriod.R")
 
 # Fit Generalized Estimating Equations Models
 

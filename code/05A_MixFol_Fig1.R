@@ -5,6 +5,7 @@
 ##### Preliminaries ############################################################
 # Load Packages
 library(tidyverse)
+library(patchwork)
 
 ##### Prepare Data #############################################################
 df_fig1 = df %>%
@@ -20,26 +21,12 @@ df_fig1 = df_fig1 %>%
       ifelse(VISIT == "V3", "Trimester 3", NA))
   )
 
-df_fig1 %>% head()
-
-##### Prepare Labels ###########################################################
-fig1_labels = as_labeller(c(NO2="NO[2] (ppb)", O3="O[3] (ppb)", 
-  PM25="PM[2.5] (µg/m^3)", SO2="SO[2] (ppb)"), default = label_parsed)
-
 ##### Generate Figure ##########################################################
-fig1 = df_fig1 %>%
-  ggplot(aes(x = CONCENTRATION)) +
-  geom_density() +
-  facet_wrap(POLLUTANT ~ VISIT, ncol = 2, scales = "free", 
-    labeller = labeller(POLLUTANT = fig1_labels)) +
-  labs(
-    x = "Concentration",
-    y = "Density") +
-  theme_bw() +
-  theme(
-    panel.grid.major.x = element_blank(),
-    panel.grid.minor = element_blank()
-  )
+fig1 =
+  df_fig1 %>% fn_fig1(x = "NO2")  / 
+  df_fig1 %>% fn_fig1(x = "O3")   /
+  df_fig1 %>% fn_fig1(x = "PM25") / 
+  df_fig1 %>% fn_fig1(x = "SO2")
 
 fig1
 

@@ -1,12 +1,12 @@
 ################################################################################
 # Environmental Mixtures and Plasma Folate in Pregnancy
-# Join Data
+# Table 2
 
 ##### Preliminaries ############################################################
 # Load Packages
 library(tidyverse)
 
-##### Table 2: Plasma Total Folate by Covariates ###############################
+##### Plasma Total Folate by Covariates ########################################
 # Overall
 df %>%
   select(ends_with("TOTAL")) %>%
@@ -66,5 +66,5 @@ tbl2 <- left_join(tmp_tbl2_tm1, tmp_tbl2_tm3, by = c("var","val"))
 tbl2 %>% head()
 
 ##### Write Table ##############################################################
-write_csv(tbl2, "../Analysis/MixFol_Table2.csv", col_names = TRUE)
+write_csv(tbl2, "tables/MixFol_Table2.csv", col_names = TRUE)
 

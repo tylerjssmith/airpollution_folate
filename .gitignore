@@ -6,6 +6,7 @@
 *.rds
 
 # Ignore Non-code Directories
+archive/
 data/
 drafts/
 figures/

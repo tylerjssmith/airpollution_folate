@@ -36,3 +36,52 @@ make_table <- function(data, x, y = FOL_TM1_TOTAL) {
     select(var, val, n, med_iqr)
 
 }
+
+##### Figure S1: Density Plots #################################################
+fn_figS1 = function(data, x, labels = TRUE)
+{
+  if(labels) {
+    fig_labels = as_labeller(c(NO2="NO[2] (ppb)", O3="O[3] (ppb)", 
+      PM25="PM[2.5] (µg/m^3)", SO2="SO[2] (ppb)"), default = label_parsed)
+  }
+  
+  out = data %>%
+    filter(POLLUTANT == x) %>%
+    ggplot(aes(x = CONCENTRATION)) +
+    geom_density() +
+    facet_grid(POLLUTANT ~ VISIT, 
+      labeller = labeller(POLLUTANT = fig_labels)) +
+    labs(
+      x = "Concentration",
+      y = "Density") +
+    theme_bw() +
+    theme(
+      panel.grid.major.x = element_blank(),
+      panel.grid.minor = element_blank()
+    )
+  
+  return(out)
+}
+
+##### Figure S2: Density Plots #################################################
+fn_figS2 = function(data = df_fig2, x) 
+{
+  out = data %>%
+    filter(SCALE == x) %>%
+    ggplot(aes(x = CONCENTRATION)) +
+    geom_density() +
+    facet_grid(SCALE ~ VISIT) +
+    labs(
+      x = "Concentration",
+      y = "Density") +
+    theme_bw() +
+    theme(
+      panel.grid.major.x = element_blank(),
+      panel.grid.minor = element_blank()
+    )
+  
+  return(out)
+}
+
+
+
