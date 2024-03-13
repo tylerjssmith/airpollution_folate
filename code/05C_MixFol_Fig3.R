@@ -1,12 +1,12 @@
 ################################################################################
 # Environmental Mixtures and Plasma Folate in Pregnancy
-# Figure 3: Plasma Total Folate by Air Pollution
+# Figure 3
 
 ##### Preliminaries ############################################################
 # Load Packages
 library(tidyverse)
 
-##### Figure 3: Plasma Total Folate by Air Pollutant Exposures #################
+##### Plasma Total Folate by Air Pollution #####################################
 # Prepare Data for Figure
 df_fig3 <- df %>%
   select(
@@ -54,7 +54,7 @@ names(labs_fig3_air) <- c("NO2_TRIM1_L2","O3_TRIM1_L2","PM25_TRIM1_L2","SO2_TRIM
 
 ggsave(
   plot = fig3,
-  filename = "MixFol_Fig3_Folate_by_Air.jpg",
+  filename = "figures/MixFol_Fig3_Folate_by_Air.jpg",
   device = "jpeg",
   width = 6.5,
   height = 8,
