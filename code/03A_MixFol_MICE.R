@@ -14,20 +14,28 @@ df %>% head()
 ##### Select Data ##############################################################
 # Coarsen Time Variables
 df = df %>%
-  mutate(VISIT1_MONTH = month(VISIT1_DATE)) %>%
-  mutate(VISIT3_MONTH = month(VISIT3_DATE))
+  mutate(TM1_MONTH = month(TM1_DATE)) %>%
+  mutate(TM3_MONTH = month(TM3_DATE))
 
 df_sub = df %>%
   select(
     # Administrative
     SUBJECT_ID,
     SITE_ID,
-    VISIT1_MONTH,
-    VISIT3_MONTH,
+    TM1_MONTH,
+    TM3_MONTH,
     
-    # Outcomes
-    FOL_TM1_TOTAL_LN, 
+    # Outcomes: Trimester 1
+    FOL_TM1_TOTAL_LN,
+    FOL_TM1_5methylTHF_LN,
+    FOL_TM1_NONMETHYL_LN,
+    FOL_TM1_UMFA_LN,
+    
+    # Outcomes: Trimester 3
     FOL_TM3_TOTAL_LN, 
+    FOL_TM3_5methylTHF_LN,
+    FOL_TM3_NONMETHYL_LN,
+    FOL_TM3_UMFA_LN,
     
     # Exposures
     starts_with("NO2"), 
@@ -51,7 +59,7 @@ df_sub = df %>%
 
 ##### Multiple Imputation ######################################################
 # Imputations
-m = 50
+m = 25
 
 # Iterations
 maxit = 100
@@ -85,10 +93,14 @@ dev.off()
 imp_gee = imp %>%
   complete(action = "long", include = TRUE) %>%
   pivot_longer(
-    cols = c(FOL_TM1_TOTAL_LN, FOL_TM3_TOTAL_LN),
-    names_to = "VISIT",
-    values_to = "FOL_TOTAL_LN"
+    cols = starts_with("FOL_"),
+    names_to = "FOL_VIT",
+    values_to = "FOL_CON_LN"
   )
+
+imp_gee %>% head()
+
+imp_gee %>% select(FOL_VIT, FOL_CON_LN)
 
 # Set Subject ID
 imp_gee = imp_gee %>%
@@ -97,20 +109,28 @@ imp_gee = imp_gee %>%
   mutate(SUBJECT_ID2 = cur_group_id()) %>% 
   ungroup()
 
+imp_gee %>% head()
+
 # Set Visit
 imp_gee = imp_gee %>%
-  mutate(VISIT = ifelse(VISIT == "FOL_TM1_TOTAL_LN", "Visit1", "Visit3"))
+  mutate(VISIT = ifelse(grepl("TM1", FOL_VIT), "TM1", "TM3"))
+
+imp_gee = imp_gee %>%
+  mutate(FOL_VIT = gsub("TM1_", "", FOL_VIT)) %>%
+  mutate(FOL_VIT = gsub("TM3_", "", FOL_VIT))
+
+imp_gee %>% select(VISIT, FOL_VIT, FOL_CON_LN)
 
 # Set Visit Month
 imp_gee = imp_gee %>%
-  mutate(VISIT_MONTH = ifelse(VISIT == "Visit1", VISIT1_MONTH, VISIT3_MONTH))
+  mutate(VISIT_MONTH = ifelse(VISIT == "TM1", VISIT1_MONTH, VISIT3_MONTH))
 
 # Set Exposure
 imp_gee = imp_gee %>%
-  mutate(NO2  = ifelse(VISIT == "Visit1", NO2_V1,  NO2_V3))  %>%
-  mutate(O3   = ifelse(VISIT == "Visit1", O3_V1,   O3_V3))   %>%
-  mutate(PM25 = ifelse(VISIT == "Visit1", PM25_V1, PM25_V3)) %>%
-  mutate(SO2  = ifelse(VISIT == "Visit1", SO2_V1,  SO2_V3))
+  mutate(NO2  = ifelse(VISIT == "TM1", NO2_V1,  NO2_V3))  %>%
+  mutate(O3   = ifelse(VISIT == "TM1", O3_V1,   O3_V3))   %>%
+  mutate(PM25 = ifelse(VISIT == "TM1", PM25_V1, PM25_V3)) %>%
+  mutate(SO2  = ifelse(VISIT == "TM1", SO2_V1,  SO2_V3))
 
 imp_gee = imp_gee %>%
   mutate(across(NO2:SO2, ~ log2(.x)))
@@ -130,7 +150,8 @@ imp_gee = imp_gee %>%
     VISIT_MONTH,
     
     # Outcome
-    FOL_TOTAL_LN,
+    FOL_VIT,
+    FOL_CON_LN,
     
     # Exposure
     NO2,
@@ -155,30 +176,60 @@ imp_gee = imp_gee %>%
 imp_gee %>% head()
 
 # Remove Observations with Missing Outcomes
+imp_gee %>%
+  filter(.imp == 0) %>%
+  group_by(VISIT, FOL_VIT) %>%
+  count(!is.na(FOL_CON_LN)) %>%
+  mutate(p = n / sum(n) * 100) %>%
+  filter(`!is.na(FOL_CON_LN)`)
+
 missing_fol_v1 = imp_gee %>%
   filter(.imp == 0) %>%
-  filter(VISIT == "Visit1" & is.na(FOL_TOTAL_LN)) %>%
+  filter(VISIT == "TM1" & is.na(FOL_CON_LN)) %>%
   pull(SUBJECT_ID)
 
 missing_fol_v3 = imp_gee %>%
   filter(.imp == 0) %>%
-  filter(VISIT == "Visit3" & is.na(FOL_TOTAL_LN)) %>%
+  filter(VISIT == "TM3" & is.na(FOL_CON_LN)) %>%
   pull(SUBJECT_ID)
 
 imp_gee = imp_gee %>%
   filter(
-    (VISIT == "Visit1" & (!SUBJECT_ID %in% missing_fol_v1)) |
-    (VISIT == "Visit3" & (!SUBJECT_ID %in% missing_fol_v3))
+    (VISIT == "TM1" & (!SUBJECT_ID %in% missing_fol_v1)) |
+    (VISIT == "TM3" & (!SUBJECT_ID %in% missing_fol_v3))
   )
+
+imp_gee %>%
+  filter(.imp == 0) %>%
+  group_by(VISIT, FOL_VIT) %>%
+  count(!is.na(FOL_CON_LN)) %>%
+  mutate(p = n / sum(n) * 100) %>%
+  filter(`!is.na(FOL_CON_LN)`)
 
 # Transform to mids Object
 imp_gee = imp_gee %>%
+  pivot_wider(
+    id_cols = c(.imp, .id, SUBJECT_ID, SUBJECT_ID2, SITE_ID, VISIT, VISIT_MONTH, 
+      NO2, O3, PM25, SO2, AGE, EDUCATION, RACE, INCOME, HOUSEHOLD_SIZE, 
+      BIRTH_COUNTRY, HEALTHY_EATING, FOLIC_ACID2, FOLIC_ACID3), 
+    names_from = FOL_VIT, 
+    values_from = FOL_CON_LN
+  )
+
+imp_gee = imp_gee %>%
+  select(.imp, .id, SUBJECT_ID, SUBJECT_ID2, SITE_ID, VISIT, VISIT_MONTH, 
+    starts_with("FOL_"), everything()) %>%
   arrange(.imp, .id, VISIT) %>%
   group_by(.imp) %>%
   mutate(.id = row_number()) %>%
   ungroup() %>%
   arrange(.imp,.id,SUBJECT_ID2) %>%
   as.mids()
+
+complete(imp_gee, 1) %>%
+  head()
+
+saveRDS(imp_gee, file = "data/MixFol_Complete_Imputed_Long.rds")
 
 # Check Sample Size by Imputation and Visit
 imp_gee %>%

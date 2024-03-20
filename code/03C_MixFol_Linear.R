@@ -29,6 +29,7 @@ fit_lm_by_fa2 = function(data, x, y = "FOL_TM1_TOTAL_LN")
   pool(fit)
 }
 
+##### Plasma Total Folate ######################################################
 # Visit 1
 imp_lm_v1 %>% 
   fit_lm_by_fa2(x = "NO2_V1") %>% 
@@ -69,5 +70,56 @@ imp_lm_v1 %>%
   fit_lm_by_fa2(
     x = "SO2_V3", 
     y = "FOL_TM3_TOTAL_LN") %>% 
+  summary()
+
+##### Plasma UMFA ##############################################################
+# Visit 1
+imp_lm_v1 %>% 
+  fit_lm_by_fa2(
+    x = "NO2_V1", 
+    y = "FOL_TM1_UMFA_LN") %>% 
+  summary()
+
+imp_lm_v1 %>% 
+  fit_lm_by_fa2(
+    x = "O3_V1", 
+    y = "FOL_TM1_UMFA_LN") %>% 
+  summary()
+
+imp_lm_v1 %>% 
+  fit_lm_by_fa2(
+    x = "PM25_V1", 
+    y = "FOL_TM1_UMFA_LN") %>% 
+  summary()
+
+imp_lm_v1 %>% 
+  fit_lm_by_fa2(
+    x = "SO2_V1", 
+    y = "FOL_TM1_UMFA_LN") %>% 
+  summary()
+
+# Visit 3
+imp_lm_v3 %>% 
+  fit_lm_by_fa2(
+    x = "NO2_V3", 
+    y = "FOL_TM3_UMFA_LN") %>% 
+  summary()
+
+imp_lm_v3 %>% 
+  fit_lm_by_fa2(
+    x = "O3_V3", 
+    y = "FOL_TM3_UMFA_LN") %>% 
+  summary()
+
+imp_lm_v3 %>% 
+  fit_lm_by_fa2(
+    x = "PM25_V3", 
+    y = "FOL_TM3_UMFA_LN") %>% 
+  summary()
+
+imp_lm_v3 %>% 
+  fit_lm_by_fa2(
+    x = "SO2_V3", 
+    y = "FOL_TM3_UMFA_LN") %>% 
   summary()
 

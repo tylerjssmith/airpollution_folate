@@ -7,145 +7,207 @@
 library(tidyverse)
 library(geepack)
 
+# Specify Outcomes and Exposures
+y = c("FOL_TOTAL_LN","FOL_5methylTHF_LN","FOL_NONMETHYL_LN","FOL_UMFA_LN")
+x = c("NO2","O3","PM25","SO2")
+
 ##### Overall ##################################################################
-fit_gee = function(data, x, id = "SUBJECT_ID2", corstr = "exchangeable")
+# Function: Fit Overall Models
+fit_gee = function(data, y, x, id = "SUBJECT_ID2", corstr = "exchangeable",
+  model_label = "Overall")
 {
-  fit = with(data, geeglm(FOL_TOTAL_LN ~ get(x) + 
+  # Fit Model
+  fit = with(data, geeglm(get(y) ~ get(x) + 
       AGE + EDUCATION + RACE + INCOME + HOUSEHOLD_SIZE + BIRTH_COUNTRY + 
       HEALTHY_EATING + SITE_ID + FOLIC_ACID3 + VISIT, 
     id = get(id), corstr = corstr))
-  pool(fit)
+  
+  # Pool, Summarize, and Label Estimates
+  fit %>%
+    pool() %>%
+    summary(conf.int = TRUE) %>%
+    mutate(
+      model = model_label,
+      y = y,
+      x = x
+    )
 }
 
-fit_gee_no2 = imp_gee %>% 
-  fit_gee(x = "NO2") %>% 
-  summary() %>%
-  mutate(
-    x = "NO2", 
-    model = "overall"
-  )
+# Fit Overall Models
+est_overall = tibble()
 
-fit_gee_o3 = imp_gee %>% 
-  fit_gee(x = "O3") %>% 
-  summary() %>%
-  mutate(
-    x = "O3", 
-    model = "overall"
-  )
-
-fit_gee_pm25 = imp_gee %>% 
-  fit_gee(x = "PM25") %>% 
-  summary() %>%
-  mutate(
-    x = "PM25", 
-    model = "overall"
-  )
-
-fit_gee_so2 = imp_gee %>% 
-  fit_gee(x = "SO2") %>% 
-  summary() %>%
-  mutate(
-    x = "SO2", 
-    model = "overall"
-  )
+for(i in 1:length(y)) {
+  for(j in 1:length(x)) {
+    
+    out_ij = imp_gee %>% 
+      fit_gee(
+        y = y[i], 
+        x = x[j]
+      )
+    
+    est_overall = rbind(est_overall, out_ij)
+    print(paste0("Done: model=", out_ij[1,"model"], ", x=", x[i], ", y=", y[j]))
+    
+  }
+}
 
 ##### By Visit #################################################################
-fit_gee_by_visit = function(data, x, id = "SUBJECT_ID2", corstr = "exchangeable")
+# Function: Fit Models by Visit
+fit_gee_visit = function(data, y, x, id = "SUBJECT_ID2", corstr = "exchangeable",
+  model_label = "By Visit")
 {
-  fit = with(data, geeglm(FOL_TOTAL_LN ~ get(x) * VISIT + 
+  # Fit Model
+  fit = with(data, geeglm(get(y) ~ get(x) * VISIT + 
       AGE + EDUCATION + RACE + INCOME + HOUSEHOLD_SIZE + BIRTH_COUNTRY + 
       HEALTHY_EATING + SITE_ID + FOLIC_ACID3, 
     id = get(id), corstr = corstr))
-  pool(fit)
+  
+  # Pool, Summarize, and Label Estimates
+  fit %>%
+    pool() %>%
+    summary(conf.int = TRUE) %>%
+    mutate(
+      model = model_label,
+      y = y,
+      x = x
+    )
 }
 
-fit_gee_by_visit_no2 = imp_gee %>% 
-  fit_gee_by_visit(x = "NO2") %>% 
-  summary() %>%
-  mutate(
-    x = "NO2", 
-    model = "by_visit"
-  )
+# Fit Models by Visit
+est_visit = tibble()
 
-fit_gee_by_visit_o3 = imp_gee %>% 
-  fit_gee_by_visit(x = "O3") %>% 
-  summary() %>%
-  mutate(
-    x = "O3", 
-    model = "by_visit"
-  )
-
-fit_gee_by_visit_pm25 = imp_gee %>% 
-  fit_gee_by_visit(x = "PM25") %>% 
-  summary() %>%
-  mutate(
-    x = "PM25", 
-    model = "by_visit"
-  )
-
-fit_gee_by_visit_so2 = imp_gee %>% 
-  fit_gee_by_visit(x = "SO2") %>% 
-  summary() %>%
-  mutate(
-    x = "SO2", 
-    model = "by_visit"
-  )
+for(i in 1:length(y)) {
+  for(j in 1:length(x)) {
+    
+    out_ij = imp_gee %>% 
+      fit_gee_visit(
+        y = y[i], 
+        x = x[j]
+      )
+    
+    est_visit = rbind(est_visit, out_ij)
+    print(paste0("Done: model=", out_ij[1,"model"], ", x=", x[i], ", y=", y[j]))
+    
+  }
+}
 
 ##### By Folic Acid Supplementation ############################################
-# Three Levels
-fit_gee_by_fa3 = function(data, x, id = "SUBJECT_ID2", corstr = "exchangeable")
+# Function: Fit Models by Folic Acid Supplementation
+fit_gee_fa = function(data, y, x, id = "SUBJECT_ID2", corstr = "exchangeable",
+  model_label = "By Folic Acid")
 {
-  fit = with(data, geeglm(FOL_TOTAL_LN ~ get(x) * FOLIC_ACID3 + 
+  # Fit Model
+  fit = with(data, geeglm(get(y) ~ get(x) * FOLIC_ACID3 + 
       AGE + EDUCATION + RACE + INCOME + HOUSEHOLD_SIZE + BIRTH_COUNTRY + 
       HEALTHY_EATING + SITE_ID + VISIT, 
     id = get(id), corstr = corstr))
-  pool(fit)
+  
+  # Pool, Summarize, and Label Estimates
+  fit %>%
+    pool() %>%
+    summary(conf.int = TRUE) %>%
+    mutate(
+      model = model_label,
+      y = y,
+      x = x
+    )
 }
 
-fit_gee_by_fa3_no2 = imp_gee %>% 
-  fit_gee_by_fa3(x = "NO2") %>% 
-  summary() %>%
-  mutate(
-    x = "NO2", 
-    model = "by_fa3"
-  )
+# Fit Models by Visit
+est_fa = tibble()
 
-fit_gee_by_fa3_o3 = imp_gee %>% 
-  fit_gee_by_fa3(x = "O3") %>% 
-  summary() %>%
-  mutate(
-    x = "O3", 
-    model = "by_fa3"
-  )
+for(i in 1:length(y)) {
+  for(j in 1:length(x)) {
+    
+    out_ij = imp_gee %>% 
+      fit_gee_fa(
+        y = y[i], 
+        x = x[j]
+      )
+    
+    est_fa = rbind(est_fa, out_ij)
+    print(paste0("Done: model=", out_ij[1,"model"], ", x=", x[i], ", y=", y[j]))
+    
+  }
+}
 
-fit_gee_by_fa3_pm25 = imp_gee %>% 
-  fit_gee_by_fa3(x = "PM25") %>% 
-  summary() %>%
-  mutate(
-    x = "PM25", 
-    model = "by_fa3"
-  )
+##### Gather Results ###########################################################
+# Function: Gather Results
+tidy_gee = function(data, sort = y, digits = 3) {
+  data %>%
+    filter(grepl("get\\(x\\)", term)) %>%
+    mutate(y = gsub("FOL_", "", y)) %>%
+    select(model, y, x, term, estimate, conf.low = `2.5 %`, 
+      conf.high = `97.5 %`, p.value) %>%
+    arrange({{ sort }})
+}
 
-fit_gee_by_fa3_so2 = imp_gee %>% 
-  fit_gee_by_fa3(x = "SO2") %>% 
-  summary() %>%
-  mutate(
-    x = "SO2", 
-    model = "by_fa3"
-  )
+# Overall
+est_overall_tidy = est_overall %>% 
+  tidy_gee() %>%
+  mutate(term = x)
 
-##### Summarize Results ########################################################
-rbind(fit_gee_no2,fit_gee_o3,fit_gee_pm25,fit_gee_so2) %>%
-  filter(grepl("get", term)) %>%
-  select(x, estimate:p.value)
+# By Visit
+est_visit_tidy = est_visit %>% 
+  tidy_gee() %>%
+  mutate(term2 = gsub("get\\(x\\)", "", term)) %>%
+  mutate(term2 = gsub("VISIT", "", term2)) %>%
+  mutate(term = paste0(x,term2))
 
-rbind(fit_gee_by_visit_no2,fit_gee_by_visit_o3,fit_gee_by_visit_pm25,fit_gee_by_visit_so2) %>%
-  filter(grepl("get", term)) %>%
-  select(model, x, term, estimate:p.value)
+# By Folic Acid Supplementation
+est_fa_tidy = est_fa %>%
+  tidy_gee() %>%
+  mutate(term2 = gsub("get\\(x\\)", "", term)) %>%
+  mutate(term2 = gsub("VISIT", "", term2)) %>%
+  mutate(term = paste0(x,term2)) %>%
+  select(-term2)
 
-rbind(fit_gee_by_fa3_no2,fit_gee_by_fa3_o3,fit_gee_by_fa3_pm25,fit_gee_by_fa3_so2) %>%
-  filter(grepl("get", term)) %>%
-  select(x, term, estimate:p.value)
+##### Plot Results #############################################################
+# Overall
+est_overall_tidy %>%
+  ggplot(aes(x = y, y = estimate, ymin = conf.low, ymax = conf.high)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_errorbar(width = 0.1) +
+  geom_point() +
+  facet_wrap(. ~ term) +
+  labs(
+    x = "Term",
+    y = "Expected Difference in Plasma Folate
+    per 2-Fold Difference in Air Pollutant
+    (95% Confidence Interval)") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, 
+    margin = margin(t = 5)))
+
+# By Visit
+est_visit_tidy %>%
+  ggplot(aes(x = term, y = estimate, ymin = conf.low, ymax = conf.high)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_errorbar(width = 0.1) +
+  geom_point() +
+  facet_grid(y ~ x, scales = "free_x") +
+  labs(
+    x = "Term",
+    y = "Coefficient per Log2(Pollutant)
+    (95% Confidence Interval)") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, 
+    margin = margin(t = 5)))
+
+# By Folic Acid Supplementation
+est_fa_tidy %>%
+  ggplot(aes(x = term, y = estimate, ymin = conf.low, ymax = conf.high)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_errorbar(width = 0.1) +
+  geom_point() +
+  facet_grid(y ~ x, scales = "free_x") +
+  labs(
+    x = "Term",
+    y = "Coefficient per Log2(Pollutant)
+    (95% Confidence Interval)") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, 
+    margin = margin(t = 5)))
 
 
 
