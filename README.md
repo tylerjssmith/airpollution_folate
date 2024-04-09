@@ -16,16 +16,23 @@ This repository documents the code for an analysis of air pollution and plasma f
 
 ## Modeling
 
-* [Make Persion-Period Dataset](code/03A_MixFol_PersonPeriod.R)
-* [Run Multiple Imputation](code/03B_MixFol_MICE.R)
+* [Multiple Imputation](code/03A_MixFol_MICE.R)
+* [Linear Regression](code/03B_MixFol_Linear.R)
+* [Beta Regression](code/03C_MixFol_Beta.R)
 
 ## Tables
 
 * [Table 1](code/04A_MixFol_Table1.R)
 * [Table 2](code/04B_MixFol_Table2.R)
+* [Table 3](code/04C_MixFol_Table3.R)
+* [Table 4](code/04D_MixFol_Table4.R)
 
 ## Figures
 
 * [Figure 1](code/05A_MixFol_Fig1.R)
 * [Figure 2](code/05B_MixFol_Fig2.R)
-* [Figure 3](code/05C_MixFol_Fig3.R)
+
+## Supplemental Figures
+* [Figure S1](code/06A_MixFol_FigS1.R)
+* [Figure S2](code/06B_MixFol_FigS2.R)
+* [Figure S3](code/06C_MixFol_FigS3.R)
