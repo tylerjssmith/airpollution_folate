@@ -14,8 +14,8 @@ df %>% head()
 ##### Select Data ##############################################################
 # Coarsen Time Variables
 df = df %>%
-  mutate(TM1_MONTH = month(TM1_DATE)) %>%
-  mutate(TM3_MONTH = month(TM3_DATE))
+  mutate(TM1_MONTH = month(VISIT1_DATE)) %>%
+  mutate(TM3_MONTH = month(VISIT3_DATE))
 
 df_sub = df %>%
   select(
@@ -59,7 +59,7 @@ df_sub = df %>%
 
 ##### Multiple Imputation ######################################################
 # Imputations
-m = 25
+m = 50
 
 # Iterations
 maxit = 100
@@ -73,11 +73,18 @@ pred
 set.seed(2708)
 
 # Run MICE
-imp = mice(df_sub, m = m, predictorMatrix = pred, maxit = maxit, 
-  printFlag = TRUE)
-imp$loggedEvents
+mice_time = system.time({
+  
+  imp = mice(df_sub, m = m, predictorMatrix = pred, maxit = maxit, 
+    printFlag = TRUE)
+  
+})
 
 saveRDS(imp, file = "data/MixFol_Complete_Imputed.rds")
+write(mice_time, file = "data/mice_time.txt")
+
+# Check Logged Events
+imp$loggedEvents
 
 # Check Imputations
 pdf("figures/mice_traceplots.pdf")
@@ -88,9 +95,12 @@ pdf("figures/mice_densityplots.pdf")
 densityplot(imp)
 dev.off()
 
-##### Make Person-period Dataset ###############################################
+##### Make Long Dataset ########################################################
+# Read Imputation Object
+imp = readRDS("data/MixFol_Complete_Imputed.rds")
+
 # Pivot Longer
-imp_gee = imp %>%
+imp_tmp = imp %>%
   complete(action = "long", include = TRUE) %>%
   pivot_longer(
     cols = starts_with("FOL_"),
@@ -98,45 +108,44 @@ imp_gee = imp %>%
     values_to = "FOL_CON_LN"
   )
 
-imp_gee %>% head()
-
-imp_gee %>% select(FOL_VIT, FOL_CON_LN)
+imp_tmp %>% head()
+imp_tmp %>% select(FOL_VIT, FOL_CON_LN)
 
 # Set Subject ID
-imp_gee = imp_gee %>%
+imp_tmp = imp_tmp %>%
   arrange(.imp, .id, SUBJECT_ID) %>%
   group_by(SUBJECT_ID) %>%
   mutate(SUBJECT_ID2 = cur_group_id()) %>% 
   ungroup()
 
-imp_gee %>% head()
+imp_tmp %>% head()
 
 # Set Visit
-imp_gee = imp_gee %>%
+imp_tmp = imp_tmp %>%
   mutate(VISIT = ifelse(grepl("TM1", FOL_VIT), "TM1", "TM3"))
 
-imp_gee = imp_gee %>%
+imp_tmp = imp_tmp %>%
   mutate(FOL_VIT = gsub("TM1_", "", FOL_VIT)) %>%
   mutate(FOL_VIT = gsub("TM3_", "", FOL_VIT))
 
-imp_gee %>% select(VISIT, FOL_VIT, FOL_CON_LN)
+imp_tmp %>% select(VISIT, FOL_VIT, FOL_CON_LN)
 
 # Set Visit Month
-imp_gee = imp_gee %>%
-  mutate(VISIT_MONTH = ifelse(VISIT == "TM1", VISIT1_MONTH, VISIT3_MONTH))
+imp_tmp = imp_tmp %>%
+  mutate(VISIT_MONTH = ifelse(VISIT == "TM1", TM1_MONTH, TM3_MONTH))
 
 # Set Exposure
-imp_gee = imp_gee %>%
+imp_tmp = imp_tmp %>%
   mutate(NO2  = ifelse(VISIT == "TM1", NO2_V1,  NO2_V3))  %>%
   mutate(O3   = ifelse(VISIT == "TM1", O3_V1,   O3_V3))   %>%
   mutate(PM25 = ifelse(VISIT == "TM1", PM25_V1, PM25_V3)) %>%
   mutate(SO2  = ifelse(VISIT == "TM1", SO2_V1,  SO2_V3))
 
-imp_gee = imp_gee %>%
+imp_tmp = imp_tmp %>%
   mutate(across(NO2:SO2, ~ log2(.x)))
 
 # Select Variables
-imp_gee = imp_gee %>%
+imp_tmp = imp_tmp %>%
   select(
     # MICE
     .imp,
@@ -173,41 +182,41 @@ imp_gee = imp_gee %>%
     FOLIC_ACID2
   )
 
-imp_gee %>% head()
+imp_tmp %>% head()
 
 # Remove Observations with Missing Outcomes
-imp_gee %>%
+imp_tmp %>%
   filter(.imp == 0) %>%
   group_by(VISIT, FOL_VIT) %>%
   count(!is.na(FOL_CON_LN)) %>%
   mutate(p = n / sum(n) * 100) %>%
   filter(`!is.na(FOL_CON_LN)`)
 
-missing_fol_v1 = imp_gee %>%
+missing_fol_v1 = imp_tmp %>%
   filter(.imp == 0) %>%
   filter(VISIT == "TM1" & is.na(FOL_CON_LN)) %>%
   pull(SUBJECT_ID)
 
-missing_fol_v3 = imp_gee %>%
+missing_fol_v3 = imp_tmp %>%
   filter(.imp == 0) %>%
   filter(VISIT == "TM3" & is.na(FOL_CON_LN)) %>%
   pull(SUBJECT_ID)
 
-imp_gee = imp_gee %>%
+imp_tmp = imp_tmp %>%
   filter(
     (VISIT == "TM1" & (!SUBJECT_ID %in% missing_fol_v1)) |
     (VISIT == "TM3" & (!SUBJECT_ID %in% missing_fol_v3))
   )
 
-imp_gee %>%
+imp_tmp %>%
   filter(.imp == 0) %>%
   group_by(VISIT, FOL_VIT) %>%
   count(!is.na(FOL_CON_LN)) %>%
   mutate(p = n / sum(n) * 100) %>%
   filter(`!is.na(FOL_CON_LN)`)
 
-# Transform to mids Object
-imp_gee = imp_gee %>%
+# Pivot Wider
+imp_tmp = imp_tmp %>%
   pivot_wider(
     id_cols = c(.imp, .id, SUBJECT_ID, SUBJECT_ID2, SITE_ID, VISIT, VISIT_MONTH, 
       NO2, O3, PM25, SO2, AGE, EDUCATION, RACE, INCOME, HOUSEHOLD_SIZE, 
@@ -216,7 +225,30 @@ imp_gee = imp_gee %>%
     values_from = FOL_CON_LN
   )
 
-imp_gee = imp_gee %>%
+# Calculate Folate Vitamer Proportions
+imp_tmp %>%
+  mutate(FOL_5methylTHF_PR = exp(FOL_5methylTHF_LN) / exp(FOL_TOTAL_LN)) %>%
+  mutate(FOL_NONMETHYL_PR  = exp(FOL_NONMETHYL_LN ) / exp(FOL_TOTAL_LN)) %>%
+  mutate(FOL_UMFA_PR       = exp(FOL_UMFA_LN      ) / exp(FOL_TOTAL_LN))
+
+# (Check Proportions)
+tmp = df %>%
+  complete(action = "long") %>%
+  select(.imp, VISIT, ends_with("_PR")) %>%
+  pivot_longer(ends_with("_PR"))
+
+tmp %>%
+  group_by(.imp, VISIT, name) %>%
+  summarise(
+    min = min(value),
+    max = max(value)
+  ) %>%
+  filter(min < 0 | max > 1)
+
+rm(tmp)
+
+# Transform to mids Object
+imp_tmp = imp_tmp %>%
   select(.imp, .id, SUBJECT_ID, SUBJECT_ID2, SITE_ID, VISIT, VISIT_MONTH, 
     starts_with("FOL_"), everything()) %>%
   arrange(.imp, .id, VISIT) %>%
@@ -226,19 +258,18 @@ imp_gee = imp_gee %>%
   arrange(.imp,.id,SUBJECT_ID2) %>%
   as.mids()
 
-complete(imp_gee, 1) %>%
+complete(imp_tmp, 1) %>%
   head()
 
-saveRDS(imp_gee, file = "data/MixFol_Complete_Imputed_Long.rds")
-
 # Check Sample Size by Imputation and Visit
-imp_gee %>%
+imp_tmp %>%
   complete(action = "long") %>%
   as_tibble() %>%
   group_by(.imp, VISIT) %>%
   summarise(n = n_distinct(SUBJECT_ID))
 
-
+# Export
+saveRDS(imp_tmp, file = "data/MixFol_Complete_Imputed_Long.rds")
 
 
 
