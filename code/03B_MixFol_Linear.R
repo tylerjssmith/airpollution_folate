@@ -9,10 +9,10 @@ library(broom)
 
 ##### Prepare Data #############################################################
 # Read Data
-df = read_rds("data/MixFol_Complete_Imputed_Long.rds")
+imp_post = read_rds("data/MixFol_Complete_Imputed_Long.rds")
 
 # Check Data
-df %>% complete(action = 1) %>% head()
+imp_post %>% complete(action = 1) %>% head()
 
 ##### Fit Linear Regression Models #############################################
 # Set Vectors of Visits, Outcomes, and Exposures
@@ -31,7 +31,7 @@ for(v in seq_along(tmp_lm_v)) {
     for(j in seq_along(tmp_lm_x)) {
   
     # Unadjusted
-    fit_unaj = with(filter(df, VISIT == tmp_lm_v[v]), 
+    fit_unaj = with(filter(imp_post, VISIT == tmp_lm_v[v]), 
       lm(get(tmp_lm_y[i]) ~ get(tmp_lm_x[j])))
     
     df_unaj = fit_unaj %>%
@@ -43,7 +43,7 @@ for(v in seq_along(tmp_lm_v)) {
       mutate(adj = "Unadjusted")
     
     # Adjusted
-    fit_adj1 = with(filter(df, VISIT == tmp_lm_v[v]), 
+    fit_adj1 = with(filter(imp_post, VISIT == tmp_lm_v[v]), 
       lm(get(tmp_lm_y[i]) ~ get(tmp_lm_x[j]) + 
         AGE + EDUCATION + RACE + INCOME + HOUSEHOLD_SIZE + BIRTH_COUNTRY + 
         HEALTHY_EATING + FOLIC_ACID3 + SITE_ID))

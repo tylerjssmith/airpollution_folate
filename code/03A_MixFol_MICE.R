@@ -100,7 +100,7 @@ dev.off()
 imp = readRDS("data/MixFol_Complete_Imputed.rds")
 
 # Pivot Longer
-imp_tmp = imp %>%
+imp_post = imp %>%
   complete(action = "long", include = TRUE) %>%
   pivot_longer(
     cols = starts_with("FOL_"),
@@ -108,44 +108,44 @@ imp_tmp = imp %>%
     values_to = "FOL_CON_LN"
   )
 
-imp_tmp %>% head()
-imp_tmp %>% select(FOL_VIT, FOL_CON_LN)
+imp_post %>% head()
+imp_post %>% select(FOL_VIT, FOL_CON_LN)
 
 # Set Subject ID
-imp_tmp = imp_tmp %>%
+imp_post = imp_post %>%
   arrange(.imp, .id, SUBJECT_ID) %>%
   group_by(SUBJECT_ID) %>%
   mutate(SUBJECT_ID2 = cur_group_id()) %>% 
   ungroup()
 
-imp_tmp %>% head()
+imp_post %>% head()
 
 # Set Visit
-imp_tmp = imp_tmp %>%
+imp_post = imp_post %>%
   mutate(VISIT = ifelse(grepl("TM1", FOL_VIT), "TM1", "TM3"))
 
-imp_tmp = imp_tmp %>%
+imp_post = imp_post %>%
   mutate(FOL_VIT = gsub("TM1_", "", FOL_VIT)) %>%
   mutate(FOL_VIT = gsub("TM3_", "", FOL_VIT))
 
-imp_tmp %>% select(VISIT, FOL_VIT, FOL_CON_LN)
+imp_post %>% select(VISIT, FOL_VIT, FOL_CON_LN)
 
 # Set Visit Month
-imp_tmp = imp_tmp %>%
+imp_post = imp_post %>%
   mutate(VISIT_MONTH = ifelse(VISIT == "TM1", TM1_MONTH, TM3_MONTH))
 
 # Set Exposure
-imp_tmp = imp_tmp %>%
+imp_post = imp_post %>%
   mutate(NO2  = ifelse(VISIT == "TM1", NO2_V1,  NO2_V3))  %>%
   mutate(O3   = ifelse(VISIT == "TM1", O3_V1,   O3_V3))   %>%
   mutate(PM25 = ifelse(VISIT == "TM1", PM25_V1, PM25_V3)) %>%
   mutate(SO2  = ifelse(VISIT == "TM1", SO2_V1,  SO2_V3))
 
-imp_tmp = imp_tmp %>%
+imp_post = imp_post %>%
   mutate(across(NO2:SO2, ~ log2(.x)))
 
 # Select Variables
-imp_tmp = imp_tmp %>%
+imp_post = imp_post %>%
   select(
     # MICE
     .imp,
@@ -182,33 +182,33 @@ imp_tmp = imp_tmp %>%
     FOLIC_ACID2
   )
 
-imp_tmp %>% head()
+imp_post %>% head()
 
 # Remove Observations with Missing Outcomes
-imp_tmp %>%
+imp_post %>%
   filter(.imp == 0) %>%
   group_by(VISIT, FOL_VIT) %>%
   count(!is.na(FOL_CON_LN)) %>%
   mutate(p = n / sum(n) * 100) %>%
   filter(`!is.na(FOL_CON_LN)`)
 
-missing_fol_v1 = imp_tmp %>%
+missing_fol_v1 = imp_post %>%
   filter(.imp == 0) %>%
   filter(VISIT == "TM1" & is.na(FOL_CON_LN)) %>%
   pull(SUBJECT_ID)
 
-missing_fol_v3 = imp_tmp %>%
+missing_fol_v3 = imp_post %>%
   filter(.imp == 0) %>%
   filter(VISIT == "TM3" & is.na(FOL_CON_LN)) %>%
   pull(SUBJECT_ID)
 
-imp_tmp = imp_tmp %>%
+imp_post = imp_post %>%
   filter(
     (VISIT == "TM1" & (!SUBJECT_ID %in% missing_fol_v1)) |
     (VISIT == "TM3" & (!SUBJECT_ID %in% missing_fol_v3))
   )
 
-imp_tmp %>%
+imp_post %>%
   filter(.imp == 0) %>%
   group_by(VISIT, FOL_VIT) %>%
   count(!is.na(FOL_CON_LN)) %>%
@@ -216,7 +216,7 @@ imp_tmp %>%
   filter(`!is.na(FOL_CON_LN)`)
 
 # Pivot Wider
-imp_tmp = imp_tmp %>%
+imp_post = imp_post %>%
   pivot_wider(
     id_cols = c(.imp, .id, SUBJECT_ID, SUBJECT_ID2, SITE_ID, VISIT, VISIT_MONTH, 
       NO2, O3, PM25, SO2, AGE, EDUCATION, RACE, INCOME, HOUSEHOLD_SIZE, 
@@ -226,14 +226,13 @@ imp_tmp = imp_tmp %>%
   )
 
 # Calculate Folate Vitamer Proportions
-imp_tmp %>%
+imp_post = imp_post %>%
   mutate(FOL_5methylTHF_PR = exp(FOL_5methylTHF_LN) / exp(FOL_TOTAL_LN)) %>%
   mutate(FOL_NONMETHYL_PR  = exp(FOL_NONMETHYL_LN ) / exp(FOL_TOTAL_LN)) %>%
   mutate(FOL_UMFA_PR       = exp(FOL_UMFA_LN      ) / exp(FOL_TOTAL_LN))
 
 # (Check Proportions)
-tmp = df %>%
-  complete(action = "long") %>%
+tmp = imp_post %>%
   select(.imp, VISIT, ends_with("_PR")) %>%
   pivot_longer(ends_with("_PR"))
 
@@ -248,7 +247,7 @@ tmp %>%
 rm(tmp)
 
 # Transform to mids Object
-imp_tmp = imp_tmp %>%
+imp_post = imp_post %>%
   select(.imp, .id, SUBJECT_ID, SUBJECT_ID2, SITE_ID, VISIT, VISIT_MONTH, 
     starts_with("FOL_"), everything()) %>%
   arrange(.imp, .id, VISIT) %>%
@@ -258,18 +257,18 @@ imp_tmp = imp_tmp %>%
   arrange(.imp,.id,SUBJECT_ID2) %>%
   as.mids()
 
-complete(imp_tmp, 1) %>%
+complete(imp_post, 1) %>%
   head()
 
 # Check Sample Size by Imputation and Visit
-imp_tmp %>%
+imp_post %>%
   complete(action = "long") %>%
   as_tibble() %>%
   group_by(.imp, VISIT) %>%
   summarise(n = n_distinct(SUBJECT_ID))
 
 # Export
-saveRDS(imp_tmp, file = "data/MixFol_Complete_Imputed_Long.rds")
+saveRDS(imp_post, file = "data/MixFol_Complete_Imputed_Long.rds")
 
 
 
