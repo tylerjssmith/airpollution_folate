@@ -7,6 +7,10 @@
 library(tidyverse)
 library(ggcorrplot)
 
+##### Read Data ################################################################
+df = readRDS("data/MixFol_Complete.rds")
+df %>% head()
+
 ##### Sample Size by Visit #####################################################
 # By Visit
 df %>% count(!is.na(FOL_TM1_TOTAL))
