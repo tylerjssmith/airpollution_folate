@@ -1,6 +1,6 @@
 ################################################################################
 # Environmental Mixtures and Plasma Folate in Pregnancy
-# Figure S2: Plasma Folate Distributions
+# Figures S2-S3: Plasma Folate Distributions
 
 ##### Preliminaries ############################################################
 # Load Packages
@@ -61,7 +61,8 @@ figS2 = function(data) {
     labs(
       x = "Concentration (nmol/L)",
       y = "Density") +
-    theme_bw()
+    theme_bw() +
+    theme(panel.grid = element_blank())
   
 }
 
@@ -94,7 +95,8 @@ figS3 = function(data) {
     labs(
       x = "Proportion of Plasma Total Folate",
       y = "Density") +
-    theme_bw()
+    theme_bw() +
+    theme(panel.grid = element_blank())
   
 }
 
