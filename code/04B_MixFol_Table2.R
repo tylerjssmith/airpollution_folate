@@ -6,10 +6,12 @@
 # Load Packages
 library(tidyverse)
 
-##### Plasma Total Folate by Covariates ########################################
-# Overall
+##### Overall ##################################################################
+# Concentrations
 df %>%
-  select(ends_with("TOTAL")) %>%
+  select(starts_with("FOL_")) %>%
+  select(-ends_with("_LN")) %>%
+  select(-ends_with("_PROP")) %>%
   pivot_longer(everything()) %>%
   na.omit() %>%
   group_by(name) %>%
@@ -20,48 +22,47 @@ df %>%
     q3 = quantile(value, 0.75)
   )
 
-# First Trimester
-tmp_tbl2_tm1 <- rbind(
-  df %>% make_table(x = AGE4,
-    y = FOL_TM1_TOTAL),
-  df %>% make_table(x = EDUCATION, 
-    y = FOL_TM1_TOTAL),
-  df %>% make_table(x = RACE, 
-    y = FOL_TM1_TOTAL),
-  df %>% make_table(x = INCOME, 
-    y = FOL_TM1_TOTAL),
-  df %>% make_table(x = HOUSEHOLD_SIZE, 
-    y = FOL_TM1_TOTAL),
-  df %>% make_table(x = BIRTH_COUNTRY, 
-    y = FOL_TM1_TOTAL),
-  df %>% make_table(x = FOLIC_ACID_CAT, 
-    y = FOL_TM1_TOTAL),
-  df %>% make_table(x = HEALTHY_EATING4,
-    y = FOL_TM1_TOTAL)
-)
+# Proportions
+df %>%
+  select(starts_with("FOL_")) %>%
+  select(ends_with("_PROP")) %>%
+  pivot_longer(everything()) %>%
+  na.omit() %>%
+  group_by(name) %>%
+  summarise(
+    n = n(),
+    median = median(value),
+    q1 = quantile(value, 0.25),
+    q3 = quantile(value, 0.75)
+  )
 
-# Third Trimester
-tmp_tbl2_tm3 <- rbind(
-  df %>% make_table(x = AGE4,
-    y = FOL_TM3_TOTAL),
-  df %>% make_table(x = EDUCATION, 
-    y = FOL_TM3_TOTAL),
-  df %>% make_table(x = RACE, 
-    y = FOL_TM3_TOTAL),
-  df %>% make_table(x = INCOME, 
-    y = FOL_TM3_TOTAL),
-  df %>% make_table(x = HOUSEHOLD_SIZE, 
-    y = FOL_TM3_TOTAL),
-  df %>% make_table(x = BIRTH_COUNTRY, 
-    y = FOL_TM3_TOTAL),
-  df %>% make_table(x = FOLIC_ACID_CAT, 
-    y = FOL_TM3_TOTAL),
-  df %>% make_table(x = HEALTHY_EATING4,
-    y = FOL_TM3_TOTAL)
-)
+##### Plasma Total Folate by Covariates ########################################
+df %>% head()
 
-# Join Trimesters
-tbl2 <- left_join(tmp_tbl2_tm1, tmp_tbl2_tm3, by = c("var","val"))
+tbl2 = rbind(
+  # Concentrations
+  df %>% make_tbl(y = FOL_TM1_TOTAL, ylab = "FOL_TM1_TOTAL"),
+  df %>% make_tbl(y = FOL_TM3_TOTAL, ylab = "FOL_TM3_TOTAL"),
+
+  df %>% make_tbl(y = FOL_TM1_5methylTHF, ylab = "FOL_TM1_5methylTHF"),
+  df %>% make_tbl(y = FOL_TM3_5methylTHF, ylab = "FOL_TM3_5methylTHF"),
+
+  df %>% make_tbl(y = FOL_TM1_NONMETHYL, ylab = "FOL_TM1_NONMETHYL"),
+  df %>% make_tbl(y = FOL_TM3_NONMETHYL, ylab = "FOL_TM3_NONMETHYL"),
+
+  df %>% make_tbl(y = FOL_TM1_UMFA, ylab = "FOL_TM1_UMFA"),
+  df %>% make_tbl(y = FOL_TM3_UMFA, ylab = "FOL_TM3_UMFA"),
+  
+  # Proportions
+  df %>% make_tbl(y = FOL_TM1_5methylTHF_PROP, ylab = "FOL_TM1_5methylTHF_PROP"),
+  df %>% make_tbl(y = FOL_TM3_5methylTHF_PROP, ylab = "FOL_TM3_5methylTHF_PROP"),
+
+  df %>% make_tbl(y = FOL_TM1_NONMETHYL_PROP, ylab = "FOL_TM1_NONMETHYL_PROP"),
+  df %>% make_tbl(y = FOL_TM3_NONMETHYL_PROP, ylab = "FOL_TM3_NONMETHYL_PROP"),
+
+  df %>% make_tbl(y = FOL_TM1_UMFA_PROP, ylab = "FOL_TM1_UMFA_PROP"),
+  df %>% make_tbl(y = FOL_TM3_UMFA_PROP, ylab = "FOL_TM3_UMFA_PROP")
+)
 
 tbl2 %>% head()
 

@@ -7,8 +7,8 @@
 library(tidyverse)
 
 ##### Function: Make Descriptive Table #########################################
-make_table <- function(data, x, y = FOL_TM1_TOTAL) {
- 
+make_tbl_chunk <- function(data, x, y, ylab) {
+
   # Generate Summary Statistics
   x <- df %>%
     group_by({{ x }}) %>%
@@ -33,8 +33,31 @@ make_table <- function(data, x, y = FOL_TM1_TOTAL) {
     # Rename and Select Columns
     mutate(var = colnames(x)[1]) %>%
     rename(val = 1) %>%
-    select(var, val, n, med_iqr)
+    mutate(ylab = ylab) %>%
+    select(ylab, var, val, n, med_iqr)
 
+}
+
+make_tbl = function(data, y, ylab) {
+  rbind(
+    data %>% 
+      make_tbl_chunk(x = AGE4,
+      y = {{ y }}, ylab = ylab),
+    data %>% make_tbl_chunk(x = EDUCATION, 
+      y = {{ y }}, ylab = ylab),
+    data %>% make_tbl_chunk(x = RACE, 
+      y = {{ y }}, ylab = ylab),
+    data %>% make_tbl_chunk(x = INCOME, 
+      y = {{ y }}, ylab = ylab),
+    data %>% make_tbl_chunk(x = HOUSEHOLD_SIZE, 
+      y = {{ y }}, ylab = ylab),
+    data %>% make_tbl_chunk(x = BIRTH_COUNTRY, 
+      y = {{ y }}, ylab = ylab),
+    data %>% make_tbl_chunk(x = FOLIC_ACID3, 
+      y = {{ y }}, ylab = ylab),
+    data %>% make_tbl_chunk(x = HEALTHY_EATING4,
+      y = {{ y }}, ylab = ylab)
+  )
 }
 
 ##### Figure S1: Density Plots #################################################
